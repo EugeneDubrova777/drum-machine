@@ -1,0 +1,26 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+  background-color: #1f1d1d;
+}
+
+@font-face {
+  font-family: 'Discharge';
+  src: url('../fonts/DISCHARGE_2.ttf');
+}
+
+@font-face {
+  font-family: 'Punk Kid';
+  src: url('../fonts/punk_kid.ttf');
+}
+
+.header {
+  font-family: 'Punk Kid';
+  color: red;
+  text-align: center;
+  letter-spacing: 5px;
+}

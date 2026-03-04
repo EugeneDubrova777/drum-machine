@@ -1,5 +1,9 @@
+import Header from "./Header"
+
 export default function App() {
   return (
-    console.log('hello')
+    <>
+    <Header text="Drum Machine"></Header>
+    </>
   )
 }
