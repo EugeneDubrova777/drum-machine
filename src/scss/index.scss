@@ -19,8 +19,19 @@ html, body {
 }
 
 .header {
-  font-family: 'Punk Kid';
+  font-family: 'Discharge';
   color: red;
   text-align: center;
   letter-spacing: 5px;
+}
+
+.drum-machine {
+  // font-family: 'Discharge';
+  background-color: #4e1d1d;
+  border-radius: 5px;
+  padding: 30px;
+  border: 2px solid #313440;
+  color: #e0e0e0;
+  max-width: 800px;
+  margin: 0 auto;
 }
