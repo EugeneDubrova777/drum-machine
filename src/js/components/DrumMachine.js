@@ -1,22 +1,23 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, memo } from 'react';
 import Track from './Track';
-// import TransportControls from './TransportControls';
-// import BpmControl from './BpmControl';
-// import StatusIndicator from './StatusIndicator';
-// import SoundLoader from './SoundLoader';
+import TransportControls from './TransportControls';
+import BpmControl from './BpmControl';
+import SoundLoader from './SoundLoader';
 
-export default function DrumMachine() {
+const DrumMachine = () => {
   const tracks = [
-    { id: 'bass', name: 'BASS', sound: '/sounds/bass.mp3', color: '#3e3939' },
-    { id: 'snare', name: 'SNARE', sound: '/sounds/snare.mp3', color: '#605c54' },
-    { id: 'ride', name: 'RIDE', sound: '/sounds/ride.mp3', color: '#3b554d' },
-    { id: 'tom', name: 'TOM', sound: '/sounds/tom1.mp3', color: '#403d6b' },
-    { id: 'crash', name: 'CRASH', sound: '/sounds/crash.mp3', color: '#643838' },
+    { id: 'bass', name: 'BASS', sound: '../public/sounds/bass.mp3', color: '#3e3939' },
+    { id: 'snare', name: 'SNARE', sound: '../public/sounds/snare.mp3', color: '#605c54' },
+    { id: 'ride', name: 'RIDE', sound: '../public/sounds/ride.mp3', color: '#3b554d' },
+    { id: 'tom', name: 'TOM', sound: '../public/sounds/tom1.mp3', color: '#403d6b' },
+    // { id: 'crash', name: 'CRASH', sound: '../public/sounds/crash.mp3', color: '#643838' },
   ];
-
+  
   const NUM_STEPS = 8;
 
-  const [steps, setSteps] = useState(tracks.map(() => Array(NUM_STEPS).fill(false)));
+  const [steps, setSteps] = useState(
+    tracks.map(() => Array(NUM_STEPS).fill(false))
+  );
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [bpm, setBpm] = useState(120);
@@ -27,6 +28,22 @@ export default function DrumMachine() {
 
   const audioContextRef = useRef(null);
   const intervalRef = useRef(null);
+  const currentStepRef = useRef(0);
+  const isPlayingRef = useRef(false);
+  const bpmRef = useRef(120);
+  const stepsRef = useRef(steps);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  useEffect(() => {
+    bpmRef.current = bpm;
+  }, [bpm]);
+
+  useEffect(() => {
+    stepsRef.current = steps;
+  }, [steps]);
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
@@ -36,121 +53,127 @@ export default function DrumMachine() {
   }, []);
 
   const handleSoundsLoaded = (loadedSounds, loadedTrackIds) => {
-    setSounds(loadedSounds);
-    setLoadedTracks(loadedTrackIds);
+    setSounds(loadedSounds || {});
+    setLoadedTracks(loadedTrackIds || []);
     setIsLoading(false);
   };
 
   const handleError = (errorMessage) => {
     setError(errorMessage);
     setIsLoading(false);
+    setLoadedTracks([]);
   };
 
-  const playSound = useCallback(
-    (trackId) => {
-      const buffer = sounds[trackId];
-      if (!buffer) return;
+  const playSound = useCallback((trackId) => {
+    const buffer = sounds?.[trackId];
+    if (!buffer) return;
 
-      const ctx = getAudioContext();
-      if (ctx.state === 'suspended') {
-        ctx.resume();
+    const ctx = getAudioContext();
+    if (ctx.state === 'suspended') ctx.resume();
+
+    try {
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = 0.7;
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      source.start();
+    } catch (error) {
+      console.error('Error', error);
+    }
+  }, [sounds, getAudioContext]);
+
+  const playStep = useCallback((stepIndex) => {
+    const currentSteps = stepsRef.current;
+    
+    tracks.forEach((track, trackIndex) => {
+      if (currentSteps?.[trackIndex]?.[stepIndex]) {
+        playSound(track.id);
       }
+    });
+  }, [playSound, tracks]);
 
-      try {
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        const gainNode = ctx.createGain();
-        gainNode.gain.value = 0.7;
-        source.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        source.start();
-      } catch (error) {
-        console.error('Error', error);
-      }
-    },
-    [sounds, getAudioContext],
-  );
-
-  const playStep = useCallback(
-    (stepIndex) => {
-      tracks.forEach((track, trackIndex) => {
-        if (steps[trackIndex][stepIndex]) {
-          playSound(track.id);
-        }
-      });
-    },
-    [steps, playSound, tracks],
-  );
-
-  const nextStep = useCallback(() => {
-    if (!isPlaying) return;
-    playStep(currentStep);
-    setCurrentStep((prev) => (prev + 1) % NUM_STEPS);
-  }, [isPlaying, currentStep, playStep]);
+  const sequencerTick = useCallback(() => {
+    if (!isPlayingRef.current) return;
+    
+    const step = currentStepRef.current;
+    playStep(step);
+    
+    const nextStepIndex = (step + 1) % NUM_STEPS;
+    currentStepRef.current = nextStepIndex;
+    setCurrentStep(nextStepIndex);
+  }, [playStep, NUM_STEPS]);
 
   useEffect(() => {
     if (isPlaying && !isLoading && !error && Object.keys(sounds).length > 0) {
       const ctx = getAudioContext();
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
+      if (ctx.state === 'suspended') ctx.resume();
 
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-
-      const intervalMs = 60000 / bpm / 2; // для 8-х нот
-      intervalRef.current = setInterval(() => nextStep(), intervalMs);
-      setCurrentStep(0);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      
+      const intervalMs = (60000 / bpm) / 2;
+      intervalRef.current = setInterval(sequencerTick, intervalMs);
     }
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isPlaying, bpm, nextStep, getAudioContext, isLoading, error, sounds]);
+  }, [isPlaying, bpm, isLoading, error, sounds, getAudioContext, sequencerTick]);
 
-  const toggleStep = (trackIndex, stepIndex) => {
-    setSteps((prev) => {
-      const newSteps = [...prev];
-      newSteps[trackIndex] = [...newSteps[trackIndex]];
+  const toggleStep = useCallback((trackIndex, stepIndex) => {
+    setSteps(prevSteps => {
+      const newSteps = prevSteps.map(track => [...track]);
       newSteps[trackIndex][stepIndex] = !newSteps[trackIndex][stepIndex];
       return newSteps;
     });
-  };
+  }, []);
 
-  const handlePlay = () => setIsPlaying(true);
-  const handleStop = () => {
+  const handlePlay = useCallback(() => {
+    setIsPlaying(true);
+  }, []);
+
+  const handleStop = useCallback(() => {
     setIsPlaying(false);
     setCurrentStep(0);
-  };
-  const handleClear = () => {
-    setSteps(tracks.map(() => Array(NUM_STEPS).fill(false)));
-  };
+    currentStepRef.current = 0;
+  }, []);
 
-  const testSound = (trackId) => playSound(trackId);
+  const handleClear = useCallback(() => {
+    setSteps(tracks.map(() => Array(NUM_STEPS).fill(false)));
+  }, [tracks]);
+
+  const testSound = useCallback((trackId) => {
+    playSound(trackId);
+  }, [playSound]);
+
+  const trackElements = tracks.map((track, index) => (
+    <Track
+      key={track.id}
+      track={track}
+      steps={steps[index] || []}
+      isPlaying={isPlaying}
+      currentStep={currentStep}
+      trackIndex={index}
+      onToggleStep={toggleStep}
+      onTestSound={() => testSound(track.id)}
+      disabled={isLoading || !!error || !sounds?.[track.id]}
+      isSoundLoaded={!!sounds?.[track.id]}
+    />
+  ));
 
   return (
     <div className="drum-machine">
-      <SoundLoader>
+
+      <SoundLoader 
         tracks={tracks}
         getAudioContext={getAudioContext}
         onSoundsLoaded={handleSoundsLoaded}
         onError={handleError}
-      </SoundLoader>
-
-      <StatusIndicator>
-        isLoading={isLoading}
-        error={error}
-        sounds={sounds}
-        loadedTracks={loadedTracks}
-        bpm={bpm}
-        numSteps={NUM_STEPS}
-      </StatusIndicator>
+      />
 
       <div className="controls-panel">
-        <TransportControls>
+        <TransportControls
           isPlaying={isPlaying}
           isLoading={isLoading}
           hasError={!!error}
@@ -158,31 +181,20 @@ export default function DrumMachine() {
           onPlay={handlePlay}
           onStop={handleStop}
           onClear={handleClear}
-        </TransportControls>
+        />
 
-        <BpmControl>
+        <BpmControl
           bpm={bpm}
           onChange={setBpm}
           disabled={isLoading}
-        </BpmControl>
+        />
       </div>
 
       <div className="step-sequencer">
-        {tracks.map((track, index) => (
-          <Track>
-            key={track.id}
-            track={track}
-            steps={steps[index]}
-            isPlaying={isPlaying}
-            currentStep={currentStep}
-            trackIndex={index}
-            onToggleStep={toggleStep}
-            onTestSound={() => testSound(track.id)}
-            disabled={isLoading || !!error || !sounds[track.id]}
-            isSoundLoaded={!!sounds[track.id]}
-          </Track>
-        ))}
+        {trackElements}
       </div>
     </div>
   );
-}
+};
+
+export default DrumMachine;

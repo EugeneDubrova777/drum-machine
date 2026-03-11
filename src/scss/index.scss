@@ -2,7 +2,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   padding: 0;
   margin: 0;
   background-color: #1f1d1d;
@@ -26,12 +27,303 @@ html, body {
 }
 
 .drum-machine {
-  // font-family: 'Discharge';
+  font-family: 'Punk Kid';
   background-color: #4e1d1d;
-  border-radius: 5px;
   padding: 30px;
-  border: 2px solid #313440;
-  color: #e0e0e0;
+  color: red;
   max-width: 800px;
   margin: 0 auto;
+}
+
+.controls-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  gap: 10px;
+  flex-wrap: wrap;
+  background-color: #1f1d1d;
+  padding: 10px;
+}
+
+.step-sequencer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.step {
+  width: 50px;
+  height: 50px;
+  background-color: #2d3349;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  flex-shrink: 0;
+  outline: none;
+}
+
+.step:hover:not(.playing):not(.disabled) {
+  transform: scale(1.08);
+  background-color: #593a5b;
+}
+
+.step.active {
+  background-color: #ffd966;
+  border-color: #ffbe2e;
+}
+
+.step.playing {
+  background-color: #394164;
+  transform: scale(1.05);
+  animation: stepPulse 0.1s ease-in-out;
+}
+
+.step.playing.active {
+  background-color: red;
+  border-color: #dd4e4e;
+  box-shadow: 0 0 20px #fd79a8;
+}
+
+@keyframes stepPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+.transport-controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.transport-controls button {
+  background-color: #3d445c;
+  border: none;
+  color: white;
+  padding: 14px 28px;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  letter-spacing: 1px;
+  min-width: 110px;
+}
+
+.transport-controls button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.transport-controls button:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.transport-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.play-btn {
+  background: #378a49 !important;
+}
+.play-btn:hover:not(:disabled) {
+  background: #25512f !important;
+}
+
+.stop-btn {
+  background: red !important;
+}
+.stop-btn:hover:not(:disabled) {
+  background: #643636 !important;
+}
+
+.clear-btn {
+  background: #742e71 !important;
+}
+
+.clear-btn:hover {
+  background: #883784 !important;
+}
+
+.bpm-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #1e2230;
+  padding: 8px 18px;
+  border-radius: 5px;
+  border: 1px solid #3f455e;
+}
+
+.bpm-control label {
+  color: red;
+  font-size: 1.1rem;
+}
+
+.bpm-control input {
+  width: 80px;
+  background: #0f111a;
+  border: 1px solid #4a5068;
+  color: white;
+  padding: 5px;
+  border-radius: 3px;
+  text-align: center;
+  font-size: 1.1rem;
+  outline: none;
+  font-weight: bold;
+}
+
+.bpm-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bpm-btn {
+  background-color: #0f111a;
+  border: none;
+  color: red;
+  width: 10px;
+  height: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid #1e212c;
+  padding: 0;
+}
+
+.bpm-btn:hover {
+  color: white;
+}
+
+.track-header {
+  width: 140px;
+  display: flex;
+  letter-spacing: 15px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.track-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.track-name {
+  letter-spacing: 5px;
+  font-size: 1.5rem;
+}
+
+.steps-container {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: #1f1d1d;
+  padding: 12px;
+  border-left: 8px solid;
+  flex-wrap: wrap;
+  transition: all 0.1s ease;
+}
+
+.track:hover {
+  background: #272424;
+  transform: translateX(5px);
+}
+
+// oooooo
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+  }
+
+  .drum-machine {
+    padding: 15px;
+    margin: 10px;
+  }
+
+  .controls-panel {
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .transport-controls {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .transport-controls button {
+    padding: 12px 20px;
+    min-width: 90px;
+    font-size: 0.9rem;
+  }
+
+  .bpm-control {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .track {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .track-header {
+    width: 100%;
+  }
+
+  .steps-container {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .step {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.4rem;
+  }
+
+  .step {
+    width: 35px;
+    height: 35px;
+  }
 }
